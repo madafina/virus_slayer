@@ -1,0 +1,13 @@
+Virus Slayer Version 1.1
+
+Changelog :
+1.1
+- tambah modal start
+- tambah modal escape 
+- hitung score
+- hitung missed
+- tekan enter untuk start
+- tombol pause, continue, dan restart
+
+1.0
+- Initial version

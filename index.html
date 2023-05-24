@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Ball Animation V 1</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: gray;
+            width: 100%;
+            height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow: hidden;
+        }
+
+        .initial-layout {
+            background-color: rgb(26, 26, 26);
+            width: 1024px;
+            height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .info {
+            top: 0;
+            left: 0;
+            padding: 20px;
+            position: absolute;
+            color: white;
+            z-index: 1;
+        }
+
+        #canvas {
+            border: 1px solid black;
+            background-color: #dddddd;
+        }
+
+        .popup {
+            display: flex;
+            padding: 20px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: left;
+            position: fixed;
+            margin: 0 auto;
+            padding: 20px 30px;
+            background-color: rgb(230, 229, 229);
+            border: 5px solid rgb(94, 94, 94);
+            border-radius: 10px;
+            width: 30%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        ol {
+            margin-left: 0px;
+            padding-left: 20px;
+        }
+
+        li {
+            line-height: 1.5em;
+        }
+
+        .modal-esc {
+            display: none;
+        }
+
+        input[type='text'] {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #e9e9e9;
+            border-radius: 5px;
+            font-size: 25px;
+        }
+
+        input[type='text']:focus {
+            border: 1px solid #aca7ce;
+            outline: none;
+        }
+
+        button {
+            border-radius: 5px;
+            padding: 15px;
+            background: #7a83d4;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #7d85ca;
+        }
+
+        button:disabled {
+            background: #bcc1ec;
+            color: #dddddd;
+            cursor: default;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="initial-layout">
+        <div class="popup modal-esc">
+            <h3>Paused</h3>
+            <div>
+                <button id="continueButton">Continue</button>
+                <button id="restartButton">Restart</button>
+            </div>
+        </div>
+
+        <div class="modal-start">
+            <div class="popup">
+                <h3>Instruction Virus Slayer</h3>
+                <ol>
+                    <li>Input Your name and click play</li>
+                    <li>Destroy Virus with D, F, J, and K key</li>
+                    <li>Reach the highscore</li>
+                    <li>Enjoy!</li>
+                </ol>
+                <input placeholder="Your name" type="text" name="username" id="username" value="" />
+                <button class="play" id="startButton" disabled="disabled">Play</button>
+            </div>
+        </div>
+
+        <div class="info">
+            <div id="score">Score : </div>
+            <div id="missedCount">Missed : </div>
+            <div id="player">Player : </div>
+            <div id="time">Time : </div>
+        </div>
+
+        <canvas id="canvas" width="400" height="400"></canvas>
+
+    </div>
+    <script>
+
+        // Get the canvas element and its 2D context
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const keyPads = ['D', 'F', 'J', 'K'];
+
+        // Ball properties
+        const ballRadius = 25;
+        const numBalls = 4; // Number of balls to display
+        const spacing = 50; // Spacing between balls 
+
+        // Calculate the total width occupied by the balls
+        const totalWidth = (ballRadius * 2 + spacing) * numBalls - spacing;
+
+        // Calculate the initial x-coordinate of the first ball
+        const initialX = (canvas.width - totalWidth) / 2 + ballRadius;
+
+        // Create an image element for the ball
+        const ballImage = new Image();
+        ballImage.src = 'virus.png'; // Replace with the path to your ball image
+
+        // Initialize the balls with fixed positions
+        const balls = [];
+        for (let i = 0; i < numBalls; i++) {
+            const ball = {
+                x: initialX + (ballRadius * 2 + spacing) * i,
+                y: -60,
+                vy: 3, // Vertical velocity
+                delay: Math.random() * 1000, // Random time delay between 0 and 1000 milliseconds
+                stopped: false // Flag to indicate if the ball has stopped
+            };
+            balls.push(ball);
+        }
+
+        // Initialize the balls with fixed positions
+
+        // Function to draw a ball
+        function drawBall(ball, index) {
+            ctx.drawImage(ballImage, ball.x - ballRadius, ball.y - ballRadius, ballRadius * 2, ballRadius * 2);
+        }
+
+        // Rectangle properties
+        const rectWidth = 200;
+        const rectHeight = 50;
+        const rectY = canvas.height - (rectHeight + 30);
+        var score = 0;
+        let missedCount = 0;
+        let player = 0;
+        var isDKeyPressed = false;
+        var isFKeyPressed = false;
+        var isJKeyPressed = false;
+        var isKKeyPressed = false;
+        var hasScored = false;
+
+        // Function to draw the rectangle
+        function drawRectangle(index) {
+            ctx.fillStyle = "#ffdd00";
+            ctx.fillRect((100 * index), rectY, rectWidth, rectHeight);
+        }
+
+        // Pad properties
+        const padWidth = 200;
+        const padHeight = 30;
+        const padY = canvas.height - padHeight;
+        const textPos = [50, 150, 250, 350] //text coordinat
+
+        // Function to draw the rectangle
+        function drawPad(index) {
+
+            ctx.fillRect((100 * index), padY, padWidth, padHeight);
+
+            if (isDKeyPressed) {
+
+                console.log('d dipencet')
+                ctx.fillStyle = 'red'; // Set color to red when 'D' key is pressed
+            } else if (isFKeyPressed) {
+                ctx.fillStyle = 'blue'; // Set color to blue when 'F' key is pressed
+            } else {
+                ctx.fillStyle = 'green'; // Set default color to green
+            }
+
+            ctx.fill();
+
+            // Add text to the rectangle
+            ctx.fillStyle = "white";
+            ctx.font = "14px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(keyPads[index], textPos[index], padY + padHeight / 2 + 5);
+        }
+
+        var x = [0, 100, 200, 300]; // X-coordinate of the line
+        var y1 = [0, 0, 0, 0]; // Starting Y-coordinate of the line
+        var y2 = [0, canvas.height, canvas.height, canvas.height];
+
+        // Function to draw the rectangle
+        function drawLine(index) {
+            ctx.beginPath();
+            ctx.moveTo(x[index], y1[index]);
+            ctx.lineTo(x[index], y2[index]);
+            ctx.strokeStyle = "#333333"; // Red color
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+
+        // Function to check collision between a ball and the rectangle
+        function checkCollision(ball, index, keyPress) {
+            const rectX = (canvas.width - rectWidth) / 2;
+            var rectXindex = rectX * index;
+
+            // Check if the ball collides with the rectangle
+            if (
+
+                !hasScored &&
+                keypress[index] &&
+                ball.x + ballRadius > rectXindex &&
+                ball.x - ballRadius < rectXindex + rectWidth &&
+                ball.y + ballRadius > rectY
+            ) {
+                // Collision detected           
+
+                if (
+                    (isDKeyPressed == true && keypress[index] == 'isDKeyPressed') ||
+                    (isFKeyPressed == true && keypress[index] == 'isFKeyPressed') ||
+                    (isJKeyPressed == true && keypress[index] == 'isJKeyPressed') ||
+                    (isKKeyPressed == true && keypress[index] == 'isKKeyPressed')
+
+                ) {
+                    score++;
+                    hasScored = true;
+                    ball.stopped = true;
+                }
+
+            }
+
+            // Check if the ball has missed the rectangle
+            if (ball.y - ballRadius > rectY + rectHeight) {
+                // Ball missed
+                console.log(rectY + rectHeight);
+                ball.stopped = true; // Set the ball's stopped flag to true
+                missedCount++;
+                document.getElementById('missedCount').textContent = 'Missed : ' + missedCount; // Update the missed count in the div
+            }
+        }
+
+        function drawScore() {
+            var scoreDiv = document.getElementById("score");
+            scoreDiv.innerText = "Score: " + score;
+        }
+
+        var keypress = ['isDKeyPressed', 'isFKeyPressed', 'isJKeyPressed', 'isKKeyPressed'];
+
+        // Function to update the position of all balls
+        function updateBallsPosition() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update the position of each ball
+            balls.forEach((ball, index) => {
+                // Decrease the delay for the ball
+                ball.delay -= 16; // Assuming 60 frames per second (1000ms/60 = ~16ms)
+
+                // Check if the delay is over
+                if (!ball.stopped && ball.delay <= 0) {
+                    // Move the ball downwards
+                    ball.y += ball.vy; // Adjust the falling speed if needed
+
+                    // Check for collision with the rectangle
+                    checkCollision(ball, index, keypress[index]);
+
+                    // If the ball reaches the bottom, reset its position to the top and assign a new delay
+                    if (ball.y > canvas.height + ballRadius) {
+                        ball.y = -60;
+                        ball.delay = Math.random() * 1000; // Assign a new random delay
+                        ball.stopped = false;
+                    }
+                }
+                drawRectangle(index);
+                drawBall(ball, index);
+                drawLine(index);
+                drawPad(index);
+
+            });
+            drawScore();
+
+            // Request the next animation frame if not paused
+            if (!isPaused) {
+                requestAnimationFrame(updateBallsPosition);
+            }
+        }
+
+        function changeColor() {
+
+            if (isDKeyPressed) {
+                console.log('diteken')
+                ctx.strokeStyle = 'red';
+            } else {
+                ctx.fillStyle = 'green';
+            }
+        }
+
+        document.getElementById('startButton').addEventListener('click', startAnimation);
+        document.getElementById('continueButton').addEventListener('click', continueAnimation);
+        document.getElementById('restartButton').addEventListener('click', restartAnimation)
+        var modal_esc = document.querySelector(".modal-esc");
+
+        const username = document.getElementById("username");
+        const play = document.getElementById("startButton");
+        var isUsername = false;
+
+        username.addEventListener("input", function () {
+            console.log('typed')
+            if (username.value.trim() !== '') {
+                play.disabled = false;
+                console.log(username.value)
+                isUsername = true;
+                username.style.border = "1px solid #e9e9e9"
+
+            } else {
+                play.disabled = true;
+            }
+        });
+
+        function hideModal() {
+            modal_esc.style.display = "none";
+        }
+
+        // Function to start the animation and close the modal
+        function startAnimation() {
+            const player = document.getElementById("player");
+
+            document.querySelector(".modal-start").style.display = "none";
+            player.textContent += " " + username.value;
+            updateBallsPosition();
+        }
+
+        // Pause the animation
+        let isPaused = false;
+        function pauseAnimation() {
+            isPaused = true;
+        }
+
+        // Continue the animation
+        function continueAnimation() {
+            if (isPaused == true) {
+                hideModal();
+                isPaused = false;
+                updateBallsPosition();
+            }
+        }
+
+        // Restart the animation
+        function restartAnimation() {
+            if (isPaused == true) {
+                hideModal();
+                missedCount = 0;
+                score = 0;
+                document.getElementById('missedCount').textContent = 'Missed Count: ' + missedCount; // Update the missed count in the div
+                balls.forEach(ball => {
+                    ball.y = 0;
+                    ball.delay = Math.random() * 1000; // Assign a new random delay
+                    ball.stopped = false; // Reset the stopped flag
+                });
+                isPaused = false;
+                updateBallsPosition();
+            }
+        }
+
+
+        function gamePad() {
+
+            // Event listener for keydown event
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    if (isUsername == true) {
+                        startAnimation();
+                    } else {
+                        console.log('nama lom disi')
+                        username.style.border = "1px solid red"
+                    }
+                }
+                if (event.key === "Escape") {
+                    document.querySelector(".modal-esc").style.display = "block";
+                    pauseAnimation();
+                }
+                if (event.key === "D" || event.key === "d") {
+                    isDKeyPressed = true;
+                    console.log('D pressed');
+                }
+                if (event.key === "F" || event.key === "f") {
+                    isFKeyPressed = true;
+                    console.log('F pressed');
+                }
+                if (event.key === "J" || event.key === "j") {
+                    isJKeyPressed = true;
+                    console.log('J pressed');
+                }
+                if (event.key === "K" || event.key === "k") {
+                    isKKeyPressed = true;
+                    console.log('K pressed');
+                }
+            });
+
+            // Event listener for keyup event
+            document.addEventListener("keyup", function (event) {
+                if (event.key === "D" || event.key === "d") {
+                    isDKeyPressed = false;
+                    hasScored = false;
+                }
+                if (event.key === "F" || event.key === "f") {
+                    isFKeyPressed = false;
+                    hasScored = false;
+                }
+                if (event.key === "J" || event.key === "j") {
+                    isJKeyPressed = false;
+                    hasScored = false;
+                }
+                if (event.key === "K" || event.key === "k") {
+                    isKKeyPressed = false;
+                    hasScored = false;
+                }
+            });
+        }
+
+        gamePad();
+
+
+    </script>
+</body>
+
+</html>
