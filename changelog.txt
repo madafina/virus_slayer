@@ -1,6 +1,11 @@
 Virus Slayer Version 1.1
 
 Changelog :
+1.2
+- Ubah struktur coding yan glebih terstruktur
+- belum bisa ganti warna pad saat keyboard dipencet
+
+
 1.1
 - tambah modal start
 - tambah modal escape 

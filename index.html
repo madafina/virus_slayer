@@ -144,8 +144,6 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        const keyPads = ['D', 'F', 'J', 'K'];
-
         // Ball properties
         const ballRadius = 25;
         const numBalls = 4; // Number of balls to display
@@ -174,17 +172,11 @@
             balls.push(ball);
         }
 
-        // Initialize the balls with fixed positions
-
         // Function to draw a ball
         function drawBall(ball, index) {
             ctx.drawImage(ballImage, ball.x - ballRadius, ball.y - ballRadius, ballRadius * 2, ballRadius * 2);
         }
 
-        // Rectangle properties
-        const rectWidth = 200;
-        const rectHeight = 50;
-        const rectY = canvas.height - (rectHeight + 30);
         var score = 0;
         let missedCount = 0;
         let player = 0;
@@ -193,57 +185,89 @@
         var isJKeyPressed = false;
         var isKKeyPressed = false;
         var hasScored = false;
+        
+        // Rectangle properties
+        const rectWidth = 100;
+        const rectHeight = 80;
+        const rectY = canvas.height - (rectHeight + 30);
+
+        const rectangles =[
+            {x : 0, y : rectY, width : rectWidth, height : rectHeight },
+            {x : 100, y : rectY, width : rectWidth, height : rectHeight },
+            {x : 200, y : rectY, width : rectWidth, height : rectHeight },
+            {x : 300, y : rectY, width : rectWidth, height : rectHeight },
+        ];
 
         // Function to draw the rectangle
         function drawRectangle(index) {
-            ctx.fillStyle = "#ffdd00";
-            ctx.fillRect((100 * index), rectY, rectWidth, rectHeight);
+            rectangles.forEach(rectangle => { 
+                ctx.fillStyle = "#ffdd00";
+                ctx.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+            });
         }
+        
+        var keypress = ['isDKeyPressed', 'isFKeyPressed', 'isJKeyPressed', 'isKKeyPressed'];
 
         // Pad properties
         const padWidth = 200;
         const padHeight = 30;
         const padY = canvas.height - padHeight;
-        const textPos = [50, 150, 250, 350] //text coordinat
+        const padColor = 'blue';
+        const pressColor = 'rgb(72 122 179)';
+
+        const pads =[
+            {x : 0, y : padY, width : padWidth, height : padHeight, textPos : 50, text : 'D', color: padColor, pressColor: pressColor },
+            {x : 100, y : padY, width : padWidth, height : padHeight, textPos : 150, text : 'F', color: padColor, pressColor: pressColor },
+            {x : 200, y : padY, width : padWidth, height : padHeight, textPos : 250, text : 'J', color: padColor, pressColor: pressColor},
+            {x : 300, y : padY, width : padWidth, height : padHeight, textPos : 350, text : 'K', color: padColor, pressColor: pressColor },
+        ];
 
         // Function to draw the rectangle
-        function drawPad(index) {
+        function drawPad() {
 
-            ctx.fillRect((100 * index), padY, padWidth, padHeight);
+            pads.forEach((pad, index) => {          
+                ctx.beginPath();
+                ctx.rect( pad.x, pad.y, pad.width, pad.height, pad.color); 
 
-            if (isDKeyPressed) {
+                if(keypress[0] == true) {
+                    pads[0].color= pad.pressColor;
+                    console.log('pr') 
+                } 
 
-                console.log('d dipencet')
-                ctx.fillStyle = 'red'; // Set color to red when 'D' key is pressed
-            } else if (isFKeyPressed) {
-                ctx.fillStyle = 'blue'; // Set color to blue when 'F' key is pressed
-            } else {
-                ctx.fillStyle = 'green'; // Set default color to green
-            }
+                ctx.fillStyle = pad.color; 
+                
+                ctx.fillStyle = pad.color; 
+                ctx.fill();
 
-            ctx.fill();
+                // Add text to the rectangle
+                ctx.fillStyle = "white";
+                ctx.font = "14px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(pad.text, pad.textPos, padY + padHeight / 2 + 5);
+            });
 
-            // Add text to the rectangle
-            ctx.fillStyle = "white";
-            ctx.font = "14px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText(keyPads[index], textPos[index], padY + padHeight / 2 + 5);
         }
 
-        var x = [0, 100, 200, 300]; // X-coordinate of the line
-        var y1 = [0, 0, 0, 0]; // Starting Y-coordinate of the line
-        var y2 = [0, canvas.height, canvas.height, canvas.height];
+        const lines = [
+            { x: 0, y1 : 0, y2 :0},
+            { x: 100, y1 : 0, y2 :canvas.height},
+            { x: 200, y1 : 0, y2 :canvas.height},
+            { x: 300, y1 : 0, y2 :canvas.height},
+        ];
 
         // Function to draw the rectangle
-        function drawLine(index) {
+        function drawLine() {
+            lines.forEach(line => {
+
             ctx.beginPath();
-            ctx.moveTo(x[index], y1[index]);
-            ctx.lineTo(x[index], y2[index]);
+            ctx.moveTo(line.x, line.y1);
+            ctx.lineTo(line.x, line.y2);
             ctx.strokeStyle = "#333333"; // Red color
             ctx.lineWidth = 1;
             ctx.stroke();
+            
+             });
         }
-
 
         // Function to check collision between a ball and the rectangle
         function checkCollision(ball, index, keyPress) {
@@ -283,6 +307,10 @@
                 missedCount++;
                 document.getElementById('missedCount').textContent = 'Missed : ' + missedCount; // Update the missed count in the div
             }
+
+            // if(keypress[index] == 'isDKeyPressed') {
+            //     changeColor(index);
+            // }
         }
 
         function drawScore() {
@@ -290,13 +318,12 @@
             scoreDiv.innerText = "Score: " + score;
         }
 
-        var keypress = ['isDKeyPressed', 'isFKeyPressed', 'isJKeyPressed', 'isKKeyPressed'];
+        let isPaused = true;
 
         // Function to update the position of all balls
         function updateBallsPosition() {
-            // Clear the canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+            
+            
             // Update the position of each ball
             balls.forEach((ball, index) => {
                 // Decrease the delay for the ball
@@ -316,30 +343,42 @@
                         ball.delay = Math.random() * 1000; // Assign a new random delay
                         ball.stopped = false;
                     }
-                }
-                drawRectangle(index);
+                }              
+                
                 drawBall(ball, index);
-                drawLine(index);
-                drawPad(index);
-
             });
             drawScore();
 
-            // Request the next animation frame if not paused
+         
+        }
+
+        // function changeColor(index) {
+
+        //     if (isDKeyPressed) {
+        //         console.log('d dipencet' +index)
+        //         ctx.fillStyle = 'red'; // Set color to red when 'D' key is pressed                
+        //     }
+
+
+        // }
+
+        function draw() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawRectangle();
+            updateBallsPosition();
+
+            drawLine();
+            drawPad();
+
             if (!isPaused) {
-                requestAnimationFrame(updateBallsPosition);
+                requestAnimationFrame(draw);                
             }
+
         }
 
-        function changeColor() {
-
-            if (isDKeyPressed) {
-                console.log('diteken')
-                ctx.strokeStyle = 'red';
-            } else {
-                ctx.fillStyle = 'green';
-            }
-        }
+        draw();
 
         document.getElementById('startButton').addEventListener('click', startAnimation);
         document.getElementById('continueButton').addEventListener('click', continueAnimation);
@@ -373,11 +412,12 @@
 
             document.querySelector(".modal-start").style.display = "none";
             player.textContent += " " + username.value;
-            updateBallsPosition();
+            isPaused = false;
+            draw();
         }
 
         // Pause the animation
-        let isPaused = false;
+       
         function pauseAnimation() {
             isPaused = true;
         }
@@ -387,7 +427,7 @@
             if (isPaused == true) {
                 hideModal();
                 isPaused = false;
-                updateBallsPosition();
+                draw();
             }
         }
 
@@ -404,10 +444,9 @@
                     ball.stopped = false; // Reset the stopped flag
                 });
                 isPaused = false;
-                updateBallsPosition();
+                draw();
             }
         }
-
 
         function gamePad() {
 
@@ -428,6 +467,7 @@
                 if (event.key === "D" || event.key === "d") {
                     isDKeyPressed = true;
                     console.log('D pressed');
+                    // changeColor();
                 }
                 if (event.key === "F" || event.key === "f") {
                     isFKeyPressed = true;
